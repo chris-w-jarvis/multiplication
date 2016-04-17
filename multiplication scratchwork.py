@@ -25,11 +25,13 @@ import time
 numberlist = dict()
 problist = dict()
 timelist = []
+history = [] #triple of (multiplication combo, time, corrent/incorrect )
+place = 0 
 
 
 ############################## Define global functions ################################
 def initialize(l1 = 10, h1 = 99, l2 = 1, h2 = 10):
-    global numberlist, problist, timelist    
+    global numberlist, problist
     #create probability and numberlist
     for r in range(l1,h1):
         for c in range(l2,h2):
@@ -58,35 +60,36 @@ def selectNumbers():
     return (a,b)
     
 def prompt(combination ):
+    global place    
     #### Prompt for answer and recored time
     a,b = combination    
     start_time = time.time()
     answer = input(str(a) + " x " + str(b) + " = ")
     time_ = time.time() - start_time
-    timelist.append( time_  )
-    return (combination, time_ , answer == a*b )
+    history.append( ( (a,b), time_, answer==a*b  )  )
+    place =  len(history)-1 
     
     ###### Penalties for getting something wrong
     ##### Penalties for getting something slowly
-def initialResponse( triple):    
-    a,b = triple[1] ## input valules for 1) multiplicaiton numbers 
-    time = triple[2] ## 2) time it took to answers
-    correct = triple[3] ## 3) whether the answer was correct
-    
-    
-    global problist, timelist    
-      
+def initialResponse( index ):  
+    global problist, timelist  
+    a,b = history[index][0] ## input valules for 1) multiplicaiton numbers 
+    time = history[index][1] ## 2) time it took to answers
+    correct = history[index][2] ## 3) whether the answer was correct
+
     if not correct :
         problist[str(a) + ", " + str(b) ] = problist[ str(a) + ", " + str(b) ] + 0.2
         normalize()
         print "Wrong"
+        print "Time: " + str(time)
+        print "Probability: " + str( problist[str(a) + ", " + str(b) ] )
         print "The right answer is " + str(a*b)
-        print "New probability: " + str( problist[str(a) + ", " + str(b) ] )
     else :
         problist[ str(a) + ", " + str(b) ] = problist[ str(a) + ", " + str(b) ]/1.5
         normalize()
         print "Correct"
-        print "New probability: " + str(problist[str(a) + ", " + str(b) ] )
+        print "Time: " + str(time)
+        print "Probability: " + str(problist[str(a) + ", " + str(b) ] )
 
 
 
@@ -99,23 +102,28 @@ def practice():
     navigate = ""
     while navigate != "stop":
         clearScreen()
-  
-        print selectNumbers()
-        print prompt(selectNumbers() )
-        initialResponse( prompt(selectNumbers() ) ) #Finds numbers, 
-                               #stores statistics   
+
+        prompt(selectNumbers()  ) #Finds numbers, 
+        initialResponse(place) #updaes probabilities & responds to answer
+        
         string = raw_input("continue?")
         if string != "":
             navigate = "stop"
-           
-def timedTest(limit = 60):
+               
+def timedTest(limit = 30):
+    initialize()
     initialTime = time.time()
-    #while  time.time() - initialtime == limit
+    initialIndex = len(timelist)
+    while  time.time() - initialTime <= limit:
+        prompt(selectNumbers()  ) #Finds numbers, 
+        initialResponse(place) #updaes probabilities & responds to answer
+                               #stores statistics 
+    print timelist[initialIndex:]
 
 #########  
-
+#timedTest()
   
-practice()
+#practice()
 
 
 
