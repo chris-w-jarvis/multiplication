@@ -17,14 +17,16 @@ Created on Sat Mar 26 13:05:42 2016
 ######### Multiplication Machine #########
 ######### Suhel Singh ######################
 
-import pandas as pd
+
 import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
 import time
+
 
 ############################## Initialize Values ################################
 numberlist = dict()
 problist = dict()
-timelist = []
 history = [] #triple of (multiplication combo, time, corrent/incorrect )
 place = 0 
 
@@ -64,10 +66,12 @@ def prompt(combination ):
     #### Prompt for answer and recored time
     a,b = combination    
     start_time = time.time()
+    print a, b
     answer = input(str(a) + " x " + str(b) + " = ")
+    if not ( isinstance(answer, int) | isinstance(answer, float) ) :
+        prompt(combination)
     time_ = time.time() - start_time
     history.append( ( (a,b), time_, answer==a*b  )  )
-    place =  len(history)-1 
     
     ###### Penalties for getting something wrong
     ##### Penalties for getting something slowly
@@ -81,23 +85,33 @@ def initialResponse( index ):
         problist[str(a) + ", " + str(b) ] = problist[ str(a) + ", " + str(b) ] + 0.2
         normalize()
         print "Wrong"
-        print "Time: " + str(time)
-        print "Probability: " + str( problist[str(a) + ", " + str(b) ] )
+        #print "Time: " + str(time)
+        #print "Probability: " + str( problist[str(a) + ", " + str(b) ] )
         print "The right answer is " + str(a*b)
     else :
         problist[ str(a) + ", " + str(b) ] = problist[ str(a) + ", " + str(b) ]/1.5
         normalize()
         print "Correct"
-        print "Time: " + str(time)
-        print "Probability: " + str(problist[str(a) + ", " + str(b) ] )
+        #print "Time: " + str(time)
+        #print "Probability: " + str(problist[str(a) + ", " + str(b) ] )
 
-
-
+def summarizeStats():
+    clearScreen()
+    plt.hist( [x[1] for x in history[place:] ] )
+    plt.title('Time Histogram')
+    plt.xlabel('Time (seconds)')
+    plt.ylabel('Frequency (%)')
+    print "Accuracy: " + str( 1.0*sum( [x[2] for x in history[place:] ])/(len(history[place:])) )
+    print """Right: {}   Wrong: {} """.format( str( sum( [x[2] for x in history[place:] ])) , 
+                                                str(  len(history[place:]) - sum( [x[2] for x in history[place:] ]) )   )   
+    print "Average Time: " + str( np.mean( [x[2] for x in history[place:]]   ) )           
+    
 
 ############################## Driver ################################
 
 ##### Ongoing loop ######
 def practice():    
+    global initialtime, place    
     initialize()
     navigate = ""
     while navigate != "stop":
@@ -109,22 +123,49 @@ def practice():
         string = raw_input("continue?")
         if string != "":
             navigate = "stop"
-               
+    summarizeStats()
+        
+        
 def timedTest(limit = 30):
+    global initialtime, place
     initialize()
     initialTime = time.time()
-    initialIndex = len(timelist)
+    place = len(history)
     while  time.time() - initialTime <= limit:
         prompt(selectNumbers()  ) #Finds numbers, 
         initialResponse(place) #updaes probabilities & responds to answer
-                               #stores statistics 
-    print timelist[initialIndex:]
+    summarizeStats()                           #stores statistics
+
+def numberTest(n = 20):
+    global initialtime, place
+    initialize()
+    place = len(history)
+    for i in range(n):
+        prompt(selectNumbers()  ) #Finds numbers, 
+        initialResponse(place) #updaes probabilities & responds to answer
+    summarizeStats()                           #stores statistics
+
 
 #########  
 #timedTest()
   
 #practice()
-
+  
+############################## After Running the App ################################
+  
+  
+  
+def recordValues(list, filename, sheetname= None):
+    frame = pd.DataFrame(list)
+    if sheetname != 0 :
+        frame.to_excel(filename, sheetname)
+    else:
+        frame.to_excel(filename)
+    
+  
+def dropVariables():
+    global history, numberlist, place, problist
+    del history, numberlist, place, problist
 
 
 
